@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Employee">
+
+	<!-- 직원 목록 조회 -->
+	<select id="selectEmployeeList" parameterType="employeeParam" resultType="employeeVO">
+		SELECT @rownum := @rownum+1 					AS rnum
+			  ,ee.employee_id							AS employee_id
+			  ,ee.employee_name							AS employee_name
+			  ,ee.email									AS email
+			  ,ee.cellphone_number						AS cellphone_number
+			  ,ee.job_class_id							AS job_class_id
+			  ,cc.code_name								AS job_class_name
+			  ,DATE_FORMAT(ee.hire_date, '%Y-%m-%d') 	AS hire_date
+			  ,ee.employee_status						AS employee_status
+			  ,cc1.code_name							AS employee_status_name
+			  ,ee.etc									AS etc
+		  FROM EMPLOYEE ee
+		  LEFT JOIN COMMON_CODE cc ON ee.job_class_id = cc.code_id AND cc.group_code_id = 'JOB_CLASS'
+		  LEFT JOIN COMMON_CODE cc1 ON ee.employee_status = cc1.code_id AND cc1.group_code_id = 'EMPLOYEE_STATUS'
+		  	  ,(SELECT @rownum :=0) AS R  
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND ee.franchisee_id = #{franchiseeId}		
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>		 
+	</select>
+	
+	<!-- 직원 전체 개수 조회 -->
+	<select id="selectEmployeeTotalCount" parameterType="employeeParam" resultType="int">
+		SELECT COUNT(employee_id) AS total_count
+		  FROM EMPLOYEE
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND franchisee_id = #{franchiseeId}		
+		</if>
+	</select>
+	
+	<!-- 직원 목록 조회 -->
+	<select id="selectEmployeeCodeList" parameterType="employeeParam" resultType="employeeVO">
+		SELECT ee.employee_id	AS employee_id
+			  ,ee.employee_name	AS employee_name
+		  FROM EMPLOYEE ee
+		 WHERE ee.franchisee_id = #{franchiseeId}
+		   AND ee.employee_status = 'EPS0001'
+	</select>
+	
+	<!-- 직원 정보 조회 -->
+	<select id="selectEmployeeInformation" parameterType="employeeParam" resultType="employeeVO">
+		SELECT employee_id							AS employee_id
+			  ,employee_name						AS employee_name
+			  ,email								AS email
+			  ,cellphone_number						AS cellphone_number
+			  ,job_class_id							AS job_class_id
+			  ,DATE_FORMAT(hire_date, '%Y-%m-%d') 	AS hire_date
+			  ,employee_status						AS employee_status
+			  ,etc									AS etc
+		  FROM EMPLOYEE
+		 WHERE employee_id = #{employeeId}
+	</select>
+			
+	<!-- 직원 정보 저장 -->
+	<insert id="insertEmployeeInformation" parameterType="employeeVO">
+		INSERT INTO EMPLOYEE(
+				 employee_name
+				,email
+				,cellphone_number				
+				,job_class_id
+				,hire_date
+				,employee_status
+				,etc
+				,franchisee_id
+				,password
+				,authority
+				,enabled
+				,failure_cnt
+				,access_date
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{employeeName}
+				,#{email}
+				,#{cellphoneNumber}
+				,#{jobClassId}
+				,#{hireDate}
+				,#{employeeStatus}
+				,#{etc}
+				,#{franchiseeId}				
+				,#{encPassword}
+				,#{authority}
+				,#{enabled}
+				,0
+				,NOW()		
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 회원 정보 수정 -->
+	<update id="updateEmployeeInformation" parameterType="employeeVO">
+		UPDATE EMPLOYEE
+	       SET employee_name 	= #{employeeName}
+			  ,cellphone_number = #{cellphoneNumber}
+			  ,job_class_id		= #{jobClassId}
+			  ,hire_date		= #{hireDate}
+			  ,employee_status	= #{employeeStatus}
+			  ,etc		 		= #{etc}
+			<if test="encPassword != null and encPassword != '' ">
+			  ,password	 		= #{encPassword}
+			</if>
+			  ,update_date		= NOW()
+			  ,update_by		= #{employeeId}
+	     WHERE employee_id 		= #{employeeId}
+	</update>
+		 
+</mapper>

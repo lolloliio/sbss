@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Product">
+
+	<!-- 제품 목록 조회 -->
+	<select id="selectProductList" parameterType="productParam" resultType="productVO">
+		SELECT @rownum := @rownum+1 	AS rnum
+			  ,pd.product_id			AS product_id
+			  ,pd.product_name			AS product_name
+			  ,pd.product_type			AS product_type
+			  ,cc.code_name				AS product_type_name
+			  ,pd.price					AS price
+			  ,pd.memo					AS memo
+			  ,pd.use_status			AS use_status
+			  ,CASE WHEN pd.use_status = 'Y' THEN '사용'
+			  		ELSE '미사용'
+			   END 						AS use_status_name
+		  FROM PRODUCT pd
+		 INNER JOIN COMMON_CODE cc ON pd.product_type = cc.code_id AND cc.group_code_id = 'PRODUCT_TYPE'
+			  ,(SELECT @rownum :=0) AS R
+		 WHERE pd.franchisee_id = #{franchiseeId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!--  제품 전체 개수 조회 -->
+	<select id="selectProductTotalCount" parameterType="productParam" resultType="int">
+		SELECT COUNT(pd.product_id) AS total_count
+		  FROM PRODUCT pd
+		 INNER JOIN COMMON_CODE cc ON pd.product_type = cc.code_id AND cc.group_code_id = 'PRODUCT_TYPE'		  
+		 WHERE pd.franchisee_id = #{franchiseeId}
+	</select>
+
+	<!-- 제품 저장 -->
+	<insert id="insertProductInformation" parameterType="productVO">
+		INSERT INTO PRODUCT (
+				 product_name
+				,product_type
+				,price
+				,memo
+				,use_status
+				,franchisee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{productName}
+				,#{productType}
+				,#{price}
+				,#{memo}
+				,#{useStatus}
+				,#{franchiseeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 제품 수정 -->
+	<update id="updateProductInformation" parameterType="productVO">
+		UPDATE PRODUCT
+		   SET product_name 	= #{productName}
+		   	  ,product_type		= #{productType}
+		   	  ,price 			= #{price}
+		   	  ,use_status		= #{useStatus}
+		   	  ,update_date 		= NOW()
+		   	  ,update_by 		= #{employeeId}
+		 WHERE product_id 		= #{productId}
+		   AND franchisee_id 	= #{franchiseeId}
+	</update>
+
+</mapper>

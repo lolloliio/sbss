@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProgramGroup">
+
+	<!-- 프로그램 그룹 전체 목록 조회 -->
+	<select id="selectProgramGroupList" parameterType="programGroupParam" resultType="programGroupVO">
+		SELECT @rownum := @rownum+1 	AS rnum
+			  ,pg.program_group_id		AS program_group_id
+			  ,pg.program_group_name	AS program_group_name
+			  ,pg.gender				AS gender
+			  ,cc1.code_name			AS gender_name
+			  ,pg.part					AS part
+			  ,cc2.code_name			AS part_name
+			  ,pg.use_status			AS use_status
+			  ,CASE WHEN pg.use_status = 'Y' THEN '사용'
+			  		ELSE '미사용'
+			   END  					AS use_status_name
+		  FROM PROGRAM_GROUP pg
+		 INNER JOIN COMMON_CODE cc1 ON pg.gender = cc1.code_id AND cc1.group_code_id = 'GENDER'
+		 INNER JOIN COMMON_CODE cc2 ON pg.part = cc2.code_id AND cc2.group_code_id = 'PART'
+		 	  ,(SELECT @rownum :=0) AS R
+		 WHERE pg.franchisee_id = #{franchiseeId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 프로그램 그룹 전체 개수 조회 -->
+	<select id="selectProgramGroupTotalCount" parameterType="programGroupParam" resultType="int">
+		SELECT COUNT(pg.program_group_id) AS total_count
+		  FROM PROGRAM_GROUP pg
+		 INNER JOIN COMMON_CODE cc1 ON pg.gender = cc1.code_id AND cc1.group_code_id = 'GENDER'
+		 INNER JOIN COMMON_CODE cc2 ON pg.part = cc2.code_id AND cc2.group_code_id = 'PART'
+		 WHERE pg.franchisee_id = #{franchiseeId}
+	</select>
+	
+	<!-- 프로그램 그룹 코드 목록 조회 -->
+	<select id="selectProgramGroupCodeList" parameterType="programParam" resultType="programVO">
+		SELECT program_group_id
+			  ,program_group_name
+		  FROM PROGRAM_GROUP
+		 WHERE use_status = 'Y'
+		   AND franchisee_id = #{franchiseeId}
+		   AND gender = #{gender}
+		   AND part = #{part}
+	</select>
+
+	<!-- 프로그램 그룹 저장 -->
+	<insert id="insertProgramGroupInformation" parameterType="programGroupVO">
+		INSERT INTO PROGRAM_GROUP (
+				 program_group_id
+				,program_group_name
+				,gender
+				,part
+				,use_status
+				,franchisee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{programGroupId}
+				,#{programGroupName}
+				,#{gender}
+				,#{part}
+				,#{useStatus}
+				,#{franchiseeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 프로그램 그룹 수정 -->
+	<update id="updateProgramGroupInformation" parameterType="programGroupVO">
+		UPDATE PROGRAM_GROUP
+		   SET program_group_name	= #{programGroupName}
+		   	  ,part					= #{part}
+		   	  ,gender				= #{gender}
+		   	  ,use_status			= #{useStatus}
+		   	  ,update_date 			= NOW()
+		   	  ,update_by 			= #{employeeId}
+		 WHERE program_group_id		= #{programId}
+		   AND franchisee_id 		= #{franchiseeId}
+	</update>
+
+</mapper>

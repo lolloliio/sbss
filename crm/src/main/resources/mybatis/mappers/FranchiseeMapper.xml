@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Franchisee">
+
+	<!-- 가맹점 목록 조회 -->
+	<select id="selectFranchiseeList" parameterType="franchiseeParam" resultType="franchiseeVO">
+		SELECT @rownum := @rownum+1 	AS rnum
+			  ,fc.franchisee_id			AS franchisee_id
+			  ,fc.franchisee_name		AS franchisee_name
+			  ,fc.phone_number			AS phone_number
+			  ,fc.cellphone_number		AS cellphone_number
+			  ,fc.postal_code			AS postal_code
+			  ,fc.address				AS address
+			  ,fc.franchisee_status		AS franchisee_status
+			  ,cc.code_name				AS franchisee_status_name
+		  FROM FRANCHISEE fc
+		  LEFT JOIN COMMON_CODE cc ON fc.franchisee_status = cc.code_id AND cc.group_code_id = 'FRANCHISEE_STATUS'
+		  	  ,(SELECT @rownum :=0) AS R
+		 WHERE 1=1
+		<if test="franchiseeName != null and franchiseeName != ''">
+		   AND fc.franchisee_name LIKE CONCAT('%',#{franchiseeName},'%')
+		</if>
+		<if test="franchiseeStatus != null and franchiseeStatus != ''">
+		   AND fc.franchisee_status = #{franchiseeStatus}
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 가맹점 전체 개수 조회 -->
+	<select id="selectFranchiseeTotalCount" parameterType="franchiseeParam" resultType="int">
+		SELECT COUNT(franchisee_id) AS total_count
+		  FROM FRANCHISEE
+		<if test="franchiseeName != null and franchiseeName != ''">
+		   AND franchisee_name LIKE CONCAT('%',#{franchiseeName},'%')
+		</if>
+		<if test="franchiseeStatus != null and franchiseeStatus != ''">
+		   AND franchisee_status = #{franchiseeStatus}
+		</if>
+	</select>
+
+	<!-- 가맹점 정보 조회 -->
+	<select id="selectFranchiseeInformation" parameterType="franchiseeParam" resultType="franchiseeVO">
+		SELECT franchisee_id
+			  ,franchisee_name
+			  ,phone_number
+			  ,cellphone_number
+			  ,postal_code
+			  ,address
+			  ,franchisee_status
+		  FROM FRANCHISEE
+		 WHERE franchisee_id = #{franchiseeId}
+	</select>
+	
+	<!-- 가맹점 정보 저장 -->
+	<insert id="insertFranchiseeInformation" parameterType="franchiseeVO">
+		INSERT INTO FRANCHISEE(
+				 franchisee_name
+				,phone_number
+				,cellphone_number
+				,postal_code
+				,address
+				,franchisee_status				
+			)VALUES(
+				 #{franchiseeName}
+				,#{phoneNumber}
+				,#{cellphoneNumber}
+				,#{postalCode}
+				,#{address}
+				,#{franchiseeStatus}
+			)
+	</insert>
+
+	<!-- 가맹점 정보 수정 -->
+	<update id="updateFranchiseeInformation" parameterType="franchiseeVO">
+		UPDATE FRANCHISEE
+		   SET phone_number 		= #{phoneNumber}
+		   	  ,cellphone_number 	= #{cellphoneNumber}
+		   	  ,postal_code 			= #{postalCode}
+		   	  ,address 				= #{address}
+		   	  ,franchisee_status 	= #{franchiseeStatus}
+		 WHERE franchisee_id 		= #{franchiseeId}
+	</update>
+
+</mapper>

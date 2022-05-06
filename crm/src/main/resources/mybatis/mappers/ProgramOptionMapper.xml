@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProgramOption">
+
+	<!-- 프로그램 옵션 목록 조회 -->
+	<select id="selectProgramOptionList" parameterType="programOptionParam" resultType="programOptionVO">
+		SELECT @rownum := @rownum+1 	AS rnum
+			  ,po.program_option_id		AS program_option_id
+			  ,po.program_option_name	AS program_option_name
+			  ,po.price					AS price
+			  ,po.use_status			AS use_status
+			  ,CASE WHEN po.use_status = 'Y' THEN '사용'
+			  		ELSE '미사용'
+			   END  					AS use_status_name
+		  FROM PROGRAM_OPTION po
+		  	  ,(SELECT @rownum :=0) AS R
+		 WHERE po.franchisee_id = #{franchiseeId}
+		<if test="search.value != null and search.value != '' ">
+		   AND (po.program_option_name LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		po.price LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 프로그램 옵션 전체 개수 조회 -->
+	<select id="selectProgramOptionTotalCount" parameterType="programOptionParam" resultType="int">
+		SELECT COUNT(po.program_option_id) AS total_count
+		  FROM PROGRAM_OPTION po
+		 WHERE po.franchisee_id = #{franchiseeId}
+		<if test="search.value != null and search.value != '' ">
+		   AND (po.program_name LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		po.price LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+	</select>
+	
+	<!-- 프로그램 옵션 목록 조회 (코드용) -->
+	<select id="selectProgramOptionCodeList" parameterType="programOptionParam" resultType="programOptionVO">
+		SELECT po.program_option_id		AS program_option_id
+			  ,po.program_option_name	AS program_option_name
+			  ,po.price					AS price
+		  FROM PROGRAM_OPTION po
+		 WHERE po.franchisee_id = #{franchiseeId}
+		   AND po.use_status = 'Y'
+	</select>
+
+	<!-- 프로그램 옵션 저장 -->
+	<insert id="insertProgramOptionInformation" parameterType="programOptionVO">
+		INSERT INTO PROGRAM_OPTION(
+				 program_option_name
+				,price
+				,use_status
+				,franchisee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{programOptionName}
+				,#{price}
+				,#{useStatus}
+				,#{franchiseeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 프로그램 옵션 수정 -->
+	<update id="updateProgramOptionInformation" parameterType="programOptionVO">
+		UPDATE PROGRAM_OPTION
+		   SET program_option_name 	= #{programOptionName}
+		   	  ,price 				= #{price}
+		   	  ,use_status			= #{useStatus}
+		   	  ,update_date 			= NOW()
+		   	  ,update_by 			= #{employeeId}
+		 WHERE program_option_id	= #{programOptionId}
+		   AND franchisee_id 		= #{franchiseeId}
+	</update>
+
+</mapper>

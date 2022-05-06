@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Booking">
+
+	<!-- 예약 목록 조회 -->
+	<select id="selectBookingList" parameterType="bookingParam" resultType="bookingVO">
+		SELECT @rownum := @rownum+1 					AS rnum
+			  ,bk.booking_id							AS booking_id
+			  ,DATE_FORMAT(bk.booking_date, '%Y-%m-%d')	AS booking_date
+			  ,bk.booking_time							AS booking_time
+			  ,DATE_FORMAT(bk.confirm_date, '%Y-%m-%d')	AS confirm_date
+			  ,bk.confirm_time							AS confirm_time
+			  ,cm.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,cm.cellphone_number 						AS cellphone_number
+			  ,bk.booking_status						AS booking_status
+			  ,cc.code_name								AS booking_status_name
+		  FROM BOOKING bk
+ 		 INNER JOIN CUSTOMER cm ON bk.customer_id = cm.customer_id
+ 		 INNER JOIN COMMON_CODE cc ON bk.booking_status = cc.code_id AND group_code_id = 'BOOKING_STATUS'
+ 		      ,(SELECT @rownum :=0) AS R 		 
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}		
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 예약 전체 개수 조회 -->
+	<select id="selectBookingTotalCount" parameterType="bookingParam" resultType="int">
+		SELECT COUNT(bk.booking_id) AS total_count
+		  FROM BOOKING bk
+ 		 INNER JOIN CUSTOMER cm ON bk.customer_id = cm.customer_id
+ 		 INNER JOIN COMMON_CODE cc ON bk.booking_status = cc.code_id AND group_code_id = 'BOOKING_STATUS'
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}		
+		</if>
+	</select>
+	
+	<!-- 예약 정보 조회 -->
+	<select id="selectBookingInformation" parameterType="bookingParam" resultType="bookingVO">
+		SELECT bk.booking_id								AS booking_id
+			  ,DATE_FORMAT(bk.booking_date, '%Y-%m-%d')		AS booking_date
+			  ,bk.booking_time								AS booking_time
+			  ,DATE_FORMAT(bk.confirm_date, '%Y-%m-%d')		AS confirm_date
+			  ,bk.confirm_time								AS confirm_time
+			  ,cm.customer_id								AS customer_id
+			  ,cm.customer_name								AS customer_name
+			  ,cm.cellphone_number 							AS cellphone_number
+			  ,bk.booking_status							AS booking_status
+			  ,cc.code_name									AS booking_status_name
+			  ,cm.franchisee_id								AS franchisee_id
+			  ,fc.franchisee_name							AS franchisee_name
+			  ,DATE_FORMAT(bk.reception_date, '%Y-%m-%d')	AS reception_date
+			  ,bk.memo										AS memo
+			  ,bk.etc										AS etc
+			  ,bk.employee_id								AS employee_id
+			  ,em.employee_name								AS employee_name
+		  FROM BOOKING bk
+ 		 INNER JOIN CUSTOMER cm ON bk.customer_id = cm.customer_id
+ 		 INNER JOIN FRANCHISEE fc ON cm.franchisee_id = fc.franchisee_id
+ 		 INNER JOIN COMMON_CODE cc ON bk.booking_status = cc.code_id AND group_code_id = 'BOOKING_STATUS'
+ 		  LEFT JOIN EMPLOYEE em ON bk.employee_id = em.employee_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND bk.booking_id = #{bookingId}
+	</select>
+		
+	<!-- 예약 정보 저장 -->
+	<insert id="insertBookingInformation" parameterType="bookingVO">
+		INSERT INTO BOOKING(
+				 booking_date
+				,booking_time
+				,booking_status
+				,memo
+				,reception_date
+			<if test="confirmDate != null and confirmDate != '' ">				
+				,confirm_date
+			</if>
+			<if test="confirmTime != null and confirmTime != '' ">
+				,confirm_time
+			</if>
+			<if test="etc != null and etc != '' ">				
+				,etc
+			</if>				
+				,employee_id
+				,customer_id
+			)VALUES(
+				 #{bookingDate}
+				,#{bookingTime}
+				,#{bookingStatus}
+				,#{memo}
+				,#{receptionDate}
+			<if test="confirmDate != null and confirmDate != '' ">				
+				,#{confirmDate}
+			</if>
+			<if test="confirmTime != null and confirmTime != '' ">				
+				,#{confirmTime}
+			</if>
+			<if test="etc != null and etc != '' ">
+				,#{etc}
+			</if>				
+				,#{employeeId}
+				,#{customerId}
+			)
+	</insert>
+	
+	<!-- 예약 정보 수정 -->
+	<update id="updateBookingInformation" parameterType="bookingVO">
+		UPDATE BOOKING
+	       SET booking_date 	= #{bookingDate}
+	       	  ,booking_time 	= #{bookingTime}
+	       	  ,booking_status	= #{bookingStatus}
+	       	  ,memo				= #{memo}
+	       	  ,confirm_date		= #{confirmDate}
+	       	  ,confirm_time		= #{confirmTime}
+	       	  ,reception_date	= #{receptionDate}
+	       	  ,etc				= #{etc}
+	       	  ,employee_id		= #{employeeId}
+	     WHERE booking_id 		= #{bookingId} 	
+	</update>
+	
+	<!-- 예약현황 목록 조회 -->
+	<select id="selectCalEventList" parameterType="calendarParam" resultType="calendarVO">
+		SELECT bk.booking_id							AS booking_id
+			  ,DATE_FORMAT(bk.confirm_date, '%Y-%m-%d')	AS confirm_date
+			  ,bk.confirm_time							AS confirm_time
+			  ,cm.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,cm.cellphone_number 						AS cellphone_number
+		      ,CONCAT(cm.customer_name,'(',cm.cellphone_number, ')') AS title
+		      ,DATE_FORMAT(ADDTIME(bk.CONFIRM_DATE, bk.CONFIRM_TIME), '%Y-%m-%d %H:%i:%s') AS start
+		      ,DATE_FORMAT(DATE_ADD(ADDTIME(bk.CONFIRM_DATE, bk.CONFIRM_TIME), INTERVAL 1 HOUR), '%Y-%m-%d %H:%i:%s') AS end
+		      ,CONCAT('javascript:fn_openCustomerModal("', bk.booking_id, '");') AS url
+		  FROM BOOKING bk
+ 		 INNER JOIN CUSTOMER cm ON bk.customer_id = cm.customer_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND bk.booking_status = 'BKS0002'
+		   AND confirm_date BETWEEN #{start} AND #{end}
+	</select>	
+		 
+</mapper>

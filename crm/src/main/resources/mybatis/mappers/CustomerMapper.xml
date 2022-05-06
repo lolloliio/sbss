@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Customer">
+
+	<!-- 회원 목록 조회 -->
+	<select id="selectCustomerList" parameterType="customerParam" resultType="customerVO">
+		SELECT cm.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,cm.chart_id								AS chart_id
+			  ,CASE WHEN cm.gender = 'F' THEN '여자'
+			  		WHEN cm.gender = 'M' THEN '남자'
+			   END										AS gender
+			  ,cm.date_of_birth							AS date_of_birth
+			  ,cm.cellphone_number						AS cellphone_number
+			  ,cm.membership_level						AS membership_level
+			  ,cc1.code_name							AS membership_level_name
+			  ,DATE_FORMAT(cm.join_date, '%Y-%m-%d') 	AS join_date
+			  ,cm.franchisee_id							AS franchisee_id
+			  ,fc.franchisee_name						AS franchisee_name
+      		  ,CASE WHEN TIMESTAMPDIFF(
+      		  				DAY, DATE_FORMAT(NOW(), '1900-%m-%d'), 
+      		  				DATE_FORMAT(cm.date_of_birth, '1900-%m-%d'
+      		  			 )) = 0 THEN 'Y'
+            		ELSE 'N'
+               END										AS birthday			  
+		  FROM CUSTOMER cm
+		 INNER JOIN FRANCHISEE fc ON cm.franchisee_id = fc.franchisee_id
+		  LEFT JOIN COMMON_CODE cc1 ON cm.membership_level = cc1.code_id AND cc1.group_code_id = 'MEMBERSHIP_LEVEL'
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}
+		</if>
+		<if test="search.value != null and search.value != '' ">
+		   AND (cm.chart_id LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		cm.customer_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		cm.cellphone_number LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>		 
+	</select>
+	
+	<!-- 회원 전체 개수 조회 -->
+	<select id="selectCustomerTotalCount" parameterType="customerParam" resultType="int">
+		SELECT COUNT(cm.customer_id) AS total_count
+		  FROM CUSTOMER cm
+		 INNER JOIN FRANCHISEE fc ON cm.franchisee_id = fc.franchisee_id
+          LEFT JOIN COMMON_CODE cc1 ON cm.membership_level = cc1.code_id AND cc1.group_code_id = 'MEMBERSHIP_LEVEL'
+		 WHERE 1=1
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}		
+		</if>
+		<if test="search.value != null and search.value != '' ">
+		   AND (cm.chart_id LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		cm.customer_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		cm.cellphone_number LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+	</select>
+	
+	<!-- 회원 정보 조회 -->
+	<select id="selectCustomerInformation" parameterType="customerParam" resultType="customerVO">
+		SELECT cm.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,cm.chart_id								AS chart_id
+			  ,COALESCE(cm.gender, '')					AS gender
+			  ,COALESCE(cm.date_of_birth, '')			AS date_of_birth
+			  ,COALESCE(cm.cellphone_number, '')		AS cellphone_number
+			  ,COALESCE(cm.postal_code, '')				AS postal_code
+			  ,COALESCE(cm.address, '')					AS address
+			  ,COALESCE(cm.membership_level, '')		AS membership_level
+			  ,COALESCE(cm.join_date, '')				AS join_date
+			  ,COALESCE(cm.visit_path, '')				AS visit_path
+			  ,COALESCE(cm.interests, '')				AS interests
+			  ,COALESCE(cmd.skin_type, '')				AS skin_type
+			  ,COALESCE(cmd.pregnant, '')				AS pregnant
+			  ,COALESCE(cmd.manage_experience, '')		AS manage_Experience
+			  ,COALESCE(cmd.other_store_name, '')		AS other_store_name
+			  ,COALESCE(cmd.other_store_program, '')	AS other_store_program
+			  ,COALESCE(cmd.skin_problems, '')			AS skin_problems			  
+			  ,COALESCE(cmd.problem_occur_time, '')		AS problem_occur_time
+			  ,COALESCE(cmd.pimple_occur_point, '')		AS pimple_occur_point
+			  ,COALESCE(cmd.trouble_occur_time, '')		AS trouble_occur_time
+			  ,COALESCE(cmd.allergy, '')				AS allergy
+			  ,COALESCE(cmd.allergy_name, '')			AS allergy_name
+			  ,COALESCE(cmd.intensity, '')				AS intensity
+			  ,COALESCE(cmd.etc, '')					AS etc
+			  ,p.point_id								AS point_id
+			  ,p.point_amount							AS point_amount
+			  ,g.giftcard_id							AS giftcard_id
+			  ,g.giftcard_amount						AS giftcard_amount
+		  FROM CUSTOMER cm
+		  LEFT JOIN CUSTOMER_DETAIL cmd ON cm.customer_id = cmd.customer_id
+		  LEFT JOIN POINT p ON cm.customer_id = p.customer_id
+		  LEFT JOIN GIFTCARD g ON cm.customer_id = g.customer_id
+		 WHERE cm.customer_id = #{customerId}
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}		
+		</if>
+	</select>
+	
+	<!-- 차트 번호 조회 -->
+	<select id="getFranchiseeChartId" parameterType="customerVO" resultType="int">
+		SELECT IFNULL(MAX(chart_id) + 1, 1)
+  		  FROM CUSTOMER
+ 		 WHERE franchisee_id = #{franchiseeId}	
+	</select>
+		
+	<!-- 회원 정보 저장 -->
+	<insert id="insertCustomerInformation" parameterType="customerVO">
+		INSERT INTO CUSTOMER(
+				 chart_id
+				,customer_name
+				,gender
+				,date_of_birth
+				,cellphone_number
+				,postal_code
+				,address
+				,membership_level
+				,join_date
+				,visit_path
+				,franchisee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{chartId}
+				,#{customerName}
+				,#{gender}
+				,#{dateOfBirth}
+				,#{cellphoneNumber}
+				,#{postalCode}
+				,#{address}
+				,#{membershipLevel}
+				,#{joinDate}
+				,#{visitPath}
+				,#{franchiseeId}				
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	    <selectKey resultType="int" keyProperty="customerId" order="AFTER">
+	        SELECT LAST_INSERT_ID()
+	    </selectKey>			
+	</insert>
+	
+	<!-- 회원 정보 수정 -->
+	<update id="updateCustomerInformation" parameterType="customerVO">
+		UPDATE CUSTOMER
+	       SET customer_name 	= #{customerName}
+			  ,gender 			= #{gender}
+			  ,date_of_birth 	= #{dateOfBirth}
+			  ,cellphone_number = #{cellphoneNumber}
+			  ,postal_code 		= #{postalCode}
+			  ,address 			= #{address}
+			  ,membership_level = #{membershipLevel}
+			  ,join_date 		= #{joinDate}
+			  ,visit_path 		= #{visitPath}
+			  ,interests 		= #{interests}
+			  ,update_date		= NOW()
+			  ,update_by		= #{employeeId}
+	     WHERE customer_id 		= #{customerId} 	
+	</update>
+	
+	<!-- 회원 상세정보 조회 -->
+	<select id="selectCustomerDetailInformation" parameterType="customerParam" resultType="customerVO">
+		SELECT skin_type 
+			  ,pregnant
+			  ,manage_experience
+			  ,other_store_name
+			  ,other_store_program
+			  ,skin_problems
+			  ,problem_occur_time
+			  ,pimple_occur_point
+			  ,trouble_occur_time
+			  ,allergy
+			  ,allergy_name
+			  ,etc
+		  FROM CUSTOMER_DETAIL
+		 WHERE customer_id = #{customerId} 
+	</select>
+	
+	<!-- 회원 정보 저장 -->
+	<insert id="insertCustomerDetailInformation" parameterType="customerVO">
+		INSERT INTO CUSTOMER_DETAIL(
+				 customer_id
+				,skin_type
+				,pregnant
+				,manage_experience
+				,other_store_name
+				,other_store_program
+				,skin_problems
+				,problem_occur_time
+				,pimple_occur_point
+				,trouble_occur_time
+				,allergy
+				,allergy_name
+				,intensity
+				,etc
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{customerId}
+				,#{skinType}
+				,#{pregnant}
+				,#{manageExperience}
+				,#{otherStoreName}
+				,#{otherStoreProgram}
+				,#{skinProblems}
+				,#{problemOccurTime}
+				,#{pimpleOccurPoint}
+				,#{troubleOccurTime}
+				,#{allergy}
+				,#{allergyName}
+				,#{intensity}
+				,#{etc}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 회원 정보 수정 -->
+	<update id="updateCustomerDetailInformation" parameterType="customerVO">
+		UPDATE CUSTOMER_DETAIL
+		   SET skin_type 			= #{skinType}
+		      ,pregnant 			= #{pregnant}
+		      ,manage_experience 	= #{manageExperience}
+		      ,other_store_name 	= #{otherStoreName}
+		      ,other_store_program 	= #{otherStoreProgram}
+		      ,skin_problems 		= #{skinProblems}
+		      ,problem_occur_time 	= #{problemOccurTime}
+		      ,pimple_occur_point	= #{pimpleOccurPoint}
+		      ,trouble_occur_time	= #{troubleOccurTime}
+		      ,allergy				= #{allergy}
+		      ,allergy_name			= #{allergyName}
+		      ,intensity			= #{intensity}
+		      ,etc					= #{etc}
+		      ,update_date			= NOW()
+		      ,update_by			= #{employeeId}
+		 WHERE customer_id			= #{customerId} 
+	</update>
+	 
+</mapper>

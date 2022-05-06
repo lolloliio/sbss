@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Payment">
+	
+	<!-- 지불 정보 저장 -->
+	<insert id="insertPaymentInformation" parameterType="paymentVO" useGeneratedKeys="true" keyProperty="paymentId">
+		INSERT INTO PAYMENT (
+				 payment_type
+				,card
+				,cash
+				,transfer
+				,receivables
+				,discount
+				,use_point
+				,use_giftcard
+				,amount_payment
+				,payment_date
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{paymentType}
+				,#{card}
+				,#{cash}
+				,#{transfer}
+				,#{receivables}
+				,#{discount}
+				,#{usePoint}
+				,#{useGiftcard}
+				,#{amountPayment}
+				,#{paymentDate}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+</mapper>

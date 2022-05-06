@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration 
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+	<settings>
+	 	<setting name="mapUnderscoreToCamelCase" value="true"/>
+	 </settings>
+
+	<typeAliases>
+		<typeAlias alias="loginVO" 				type="com.sbss.crm.main.model.LoginVO" />
+		<typeAlias alias="franchiseeParam" 		type="com.sbss.crm.franchisee.model.FranchiseeParam" />
+		<typeAlias alias="franchiseeVO" 		type="com.sbss.crm.franchisee.model.FranchiseeVO" />
+		<typeAlias alias="customerParam" 		type="com.sbss.crm.customer.model.CustomerParam" />
+		<typeAlias alias="customerVO" 			type="com.sbss.crm.customer.model.CustomerVO" />
+		<typeAlias alias="employeeParam" 		type="com.sbss.crm.employee.model.EmployeeParam" />
+		<typeAlias alias="employeeVO" 			type="com.sbss.crm.employee.model.EmployeeVO" />
+		<typeAlias alias="commonCodeParam" 		type="com.sbss.crm.commonCode.model.CommonCodeParam" />
+		<typeAlias alias="commonCodeVO" 		type="com.sbss.crm.commonCode.model.CommonCodeVO" />
+		<typeAlias alias="bookingParam" 		type="com.sbss.crm.booking.model.BookingParam" />
+		<typeAlias alias="bookingVO" 			type="com.sbss.crm.booking.model.BookingVO" />
+		<typeAlias alias="calendarParam" 		type="com.sbss.crm.booking.model.CalendarParam" />
+		<typeAlias alias="calendarVO" 			type="com.sbss.crm.booking.model.CalendarVO" />		
+		<typeAlias alias="skincareVO" 			type="com.sbss.crm.skincare.model.SkincareVO" />
+		<typeAlias alias="skincareParam" 		type="com.sbss.crm.skincare.model.SkincareParam" />
+		<typeAlias alias="skincareDetailVO" 	type="com.sbss.crm.skincare.model.SkincareDetailVO" />
+		<typeAlias alias="skincareOptionVO" 	type="com.sbss.crm.skincare.model.SkincareOptionVO" />
+		<typeAlias alias="programVO" 			type="com.sbss.crm.program.model.ProgramVO" />
+		<typeAlias alias="programParam" 		type="com.sbss.crm.program.model.ProgramParam" />
+		<typeAlias alias="programOptionVO" 		type="com.sbss.crm.program.model.ProgramOptionVO" />
+		<typeAlias alias="programOptionParam" 	type="com.sbss.crm.program.model.ProgramOptionParam" />
+		<typeAlias alias="programGroupVO" 		type="com.sbss.crm.program.model.ProgramGroupVO" />
+		<typeAlias alias="programGroupParam" 	type="com.sbss.crm.program.model.ProgramGroupParam" />
+		<typeAlias alias="pointVO" 				type="com.sbss.crm.point.model.PointVO" />
+		<typeAlias alias="pointParam" 			type="com.sbss.crm.point.model.PointParam" />
+		<typeAlias alias="pointHistoryVO" 		type="com.sbss.crm.point.model.PointHistoryVO" />
+		<typeAlias alias="pointHistoryParam" 	type="com.sbss.crm.point.model.PointHistoryParam" />
+		<typeAlias alias="giftcardVO" 			type="com.sbss.crm.giftcard.model.GiftcardVO" />
+		<typeAlias alias="giftcardParam" 		type="com.sbss.crm.giftcard.model.GiftcardParam" />
+		<typeAlias alias="giftcardHistoryVO" 	type="com.sbss.crm.giftcard.model.GiftcardHistoryVO" />
+		<typeAlias alias="giftcardHistoryParam" type="com.sbss.crm.giftcard.model.GiftcardHistoryParam" />
+		<typeAlias alias="productVO" 			type="com.sbss.crm.product.model.ProductVO" />
+		<typeAlias alias="productParam" 		type="com.sbss.crm.product.model.ProductParam" />
+		<typeAlias alias="paymentVO" 			type="com.sbss.crm.payment.model.PaymentVO" />
+	</typeAliases>
+
+</configuration>

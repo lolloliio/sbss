@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="count-down-bg">
+
+    <head>
+        <meta charset="utf-8" />
+        <title>Codefox - Responsive Bootstrap 4 Admin Dashboard Template</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
+        <meta content="Coderthemes" name="author" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="../images/favicon.ico">
+
+        <!-- App css -->
+        <link href="../css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+        <link href="../css/icons.css" rel="stylesheet" type="text/css" />
+        <link href="../css/style.css" rel="stylesheet" type="text/css" />
+
+        <script src="../js/modernizr.min.js"></script>
+
+    </head>
+
+
+    <body class="bg-transparent">
+
+        <!-- HOME -->
+        <section>
+            <div class=" container">
+                <div class="row">
+                    <div class="col-sm-12 text-center">
+
+                        <div class="home-wrapper">
+                            <img src="../images/logo.png" alt="" height="30" class="m-b-30">
+                            <h2 class="text-white text-uppercase m-t-50">Stay tunned, we're launching very soon</h2>
+
+
+                            <div class="row">
+                                <div class="col-sm-10 offset-sm-1">
+                                    <div id="count-down" class="row">
+                                        <div class="clock-presenter days_dash col-sm-3">
+                                            <div class="digit"></div>
+                                            <div class="digit"></div>
+                                            <div class="digit"></div>
+                                            <p class='note dash_title'>Days</p>
+                                        </div>
+                                        <div class="clock-presenter hours_dash col-sm-3">
+                                            <div class="digit"></div>
+                                            <div class="digit"></div>
+                                            <p class='note dash_title'>Hours</p>
+                                        </div>
+                                        <div class="clock-presenter minutes_dash col-sm-3">
+                                            <div class="digit"></div>
+                                            <div class="digit"></div>
+                                            <p class='note dash_title'>Minutes</p>
+                                        </div>
+                                        <div class="clock-presenter seconds_dash col-sm-3">
+                                            <div class="digit"></div>
+                                            <div class="digit"></div>
+                                            <p class='note dash_title'>Seconds</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        <!-- END HOME -->
+    
+
+        <!-- jQuery  -->
+        <script src="../js/jquery.min.js"></script>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script src="../js/waves.js"></script>
+        <script src="../js/jquery.slimscroll.js"></script>
+
+        <!-- Count down js -->
+        <script src="../plugins/count-down/jquery.lwtCountdown-1.0.js"></script>
+
+        <!-- App js -->
+        <script src="../js/jquery.core.js"></script>
+        <script src="../js/jquery.app.js"></script>
+
+        <script>
+            $(document).ready(function () {
+
+                "use strict";
+
+                //Set your date
+                $('#count-down').countDown({
+                    targetDate: {
+                        'day': 22,
+                        'month': 7,
+                        'year': 2019,
+                        'hour': 7,
+                        'min': 7,
+                        'sec': 7
+                    },
+                    omitWeeks: true
+                });
+
+            });
+        </script>
+    
+
+    </body>
+</html>

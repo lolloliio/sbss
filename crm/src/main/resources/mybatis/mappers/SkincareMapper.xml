@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Skincare">
+
+	<select id="selectSkincareList" parameterType="skincareParam" resultType="skincareVO">
+		SELECT @rownum := @rownum+1 					AS rnum
+			  ,sc.skincare_id							AS skincare_id
+			  ,sc.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,sc.total_cycle							AS total_cycle			  
+			  ,sc.skincare_status						AS skincare_status
+			  ,cc.code_name								AS skincare_status_name
+			  ,DATE_FORMAT(sc.create_date, '%Y-%m-%d')	AS create_date
+			  ,sc.program_id							AS program_id
+			  ,p.program_group_id						AS program_group_id
+			  ,pg.program_group_name					AS program_group_name
+		  FROM SKINCARE sc
+		 INNER JOIN CUSTOMER cm 		ON sc.customer_id = cm.customer_id
+		 INNER JOIN COMMON_CODE cc 		ON sc.skincare_status = cc.code_id AND group_code_id = 'SKINCARE_STATUS'
+		 INNER JOIN PROGRAM p 			ON sc.program_id = p.program_id
+		 INNER JOIN PROGRAM_GROUP pg 	ON p.program_group_id = pg.program_group_id
+		 	  ,(SELECT @rownum :=0) AS R
+		 WHERE 1=1  
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}
+		</if>
+		<if test="customerId > 0">
+		   AND sc.customer_id = #{customerId}
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<select id="selectSkincareTotalCount" parameterType="skincareParam" resultType="int">
+		SELECT COUNT(sc.skincare_id) AS total_count
+		  FROM SKINCARE sc
+		 INNER JOIN CUSTOMER cm 		ON sc.customer_id = cm.customer_id
+		 INNER JOIN COMMON_CODE cc 		ON sc.skincare_status = cc.code_id AND group_code_id = 'SKINCARE_STATUS'
+		 INNER JOIN PROGRAM p 			ON sc.program_id = p.program_id
+		 INNER JOIN PROGRAM_GROUP pg 	ON p.program_group_id = pg.program_group_id
+		 WHERE 1=1 
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}
+		</if>
+		<if test="customerId > 0">
+		   AND sc.customer_id = #{customerId}
+		</if>
+	</select>
+
+	<select id="selectSkincareInformation" parameterType="skincareParam" resultType="skincareVO">
+		SELECT sc.skincare_id		AS skincare_id
+			  ,sc.total_cycle		AS total_cycle			  
+			  ,sc.customer_id		AS customer_id
+			  ,cm.customer_name		AS customer_name
+			  ,sc.skincare_status	AS skincare_status
+			  ,cc.code_name			AS skincare_status_name
+		  FROM SKINCARE sc
+		 INNER JOIN CUSTOMER cm ON sc.customer_id = cm.customer_id
+		 INNER JOIN COMMON_CODE cc ON sc.skincare_status = cc.code_id AND GROUP_CODE_ID = 'SKINCARE_STATUS'
+		 WHERE 1=1
+		   AND sc.customer_id = #{customerId}  
+		<if test="franchiseeId > 0">
+		   AND cm.franchisee_id = #{franchiseeId}
+		</if>
+	</select>
+	
+	<insert id="insertSkincareInformation" parameterType="skincareVO">
+		INSERT INTO SKINCARE(
+				 program_type
+				,program_cycle
+				,event_cycle
+				,total_cycle
+				,total_discount
+				,total_giftcard
+				,total_point
+				,total_price
+				,total_payment
+				,total_receivables
+				,etc
+				,skincare_status
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{programType}
+				,#{programCycle}
+				,#{eventCycle}
+				,#{totalCycle}
+				,#{totalDiscount}
+				,#{totalGiftcard}
+				,#{totalPoint}
+				,#{totalPrice}
+				,#{totalPayment}
+				,#{totalReceivables}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>	
+	
+	<update id="updateSkincareInformation" parameterType="skincareVO">
+		UPDATE SKINCARE
+		   SET program_type 		= #{programType}
+			  ,program_cycle 		= #{programCycle}
+			  ,event_cycle 			= #{eventCycle}
+			  ,total_cycle 			= #{totalCycle}
+			  ,total_discount 		= #{totalDiscount}
+			  ,total_giftcard 		= #{totalGiftcard}
+			  ,total_point 			= #{totalPoint}
+			  ,total_price 			= #{totalPrice}
+			  ,total_payment 		= #{totalPayment}
+			  ,total_receivables 	= #{totalReceivables}
+			  ,etc 					= #{etc}
+			  ,skincare_status 		= #{skincareStatus}
+			  ,update_date 			= NOW()
+			  ,update_by 			= #{employeeId}
+		 WHERE customer_id 			= #{skincareId}
+	</update>
+	
+	<insert id="insertSkincareDetail" parameterType="skincareDetailVO">
+		INSERT INTO SKINCARE_DETAIL(
+				 cycle
+				,manage_date
+				,memo
+				,option_price
+				,payment_id
+				,skincare_id
+				,employee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by				
+			)VALUES(
+				 #{cycle}
+				,#{manageDate}
+				,#{memo}
+				,#{optionPrice}
+				,#{paymentId}
+				,#{skincareId}
+				,#{manageEmployeeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+
+	<insert id="insertSkincareOption" parameterType="skincareOptionVO">
+		INSERT INTO SKINCARE_OPTION(
+				 skincare_option_id
+				,skincare_detail_id
+				,program_option_id
+				,cycle
+				,price
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{skincareOptionId}
+				,#{skincareDetailId}
+				,#{programOptionId}
+				,#{cycle}
+				,#{price}
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+			)
+	</insert>
+
+</mapper>

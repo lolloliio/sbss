@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Giftcard">
+	
+	<!-- 기프트카드 목록 조회 -->
+	<select id="selectGiftcardList" parameterType="giftcardParam" resultType="giftcardVO">
+		SELECT @rownum := @rownum+1 					AS rnum
+			  ,g.giftcard_id							AS giftcard_id
+			  ,g.giftcard_amount						AS giftcard_amount
+			  ,g.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,DATE_FORMAT(g.update_date, '%Y-%m-%d')	AS update_date
+		  FROM GIFTCARD g
+		 INNER JOIN CUSTOMER cm ON g.customer_id = cm.customer_id
+		  	  ,(SELECT @rownum :=0) AS R
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 기프트카드 전체 갯수 조회 -->
+	<select id="selectGiftcardTotalCount" parameterType="giftcardParam" resultType="int">
+		SELECT COUNT(g.giftcard_id) AS total_count
+		  FROM GIFTCARD g
+		 INNER JOIN CUSTOMER cm ON g.customer_id = cm.customer_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+	</select>	
+
+	<!-- 기프트카드 정보 조회 -->
+	<select id="selectGiftcardInformation" parameterType="giftcardParam" resultType="giftcardVO">
+		SELECT giftcard_amount
+		  FROM GIFTCARD
+		 WHERE customer_id = #{customerId}
+	</select>
+	
+	<!-- 기프트카드 정보 저장 -->
+	<insert id="insertGiftcardInformation" parameterType="giftcardVO" useGeneratedKeys="true" keyProperty="giftcardId">
+		INSERT INTO GIFTCARD (
+				 customer_id
+				,giftcard_amount
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{customerId}
+				,#{giftcardAmount}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 기프트카드 정보 수정 -->
+	<update id="updateGiftcardInformation" parameterType="giftcardVO">
+		UPDATE GIFTCARD
+		   SET update_date 		= NOW()
+              ,update_by 		= #{employeeId} 
+			<if test="giftcardAmount != null or giftcardAmount != '' ">
+		   	  ,giftcard_amount 	= #{giftcardAmount}
+			</if>
+		 WHERE customer_id 		= #{customerId}              
+	</update>
+	
+	<!-- 기프트카드 히스토리 목록 조회 -->
+	<select id="selectGiftcardHistoryList" parameterType="giftcardHistoryParam" resultType="giftcardHistoryVO">
+		SELECT @rownum := @rownum+1 				AS rnum
+			  ,gh.giftcard_id						AS giftcard_id
+			  ,gh.earn_amount						AS earn_amount
+			  ,gh.use_amount						AS use_amount
+			  ,gh.total_amount						AS total_amount
+			  ,DATE_FORMAT(gh.use_date, '%Y-%m-%d')	AS use_date
+			  ,gh.memo								AS memo
+			  ,cm.customer_name						AS customer_name
+			  ,pm.card								AS card
+			  ,pm.cash								AS cash
+			  ,pm.transfer							AS transfer			  
+		  FROM GIFTCARD g
+		 INNER JOIN GIFTCARD_HISTORY gh ON g.giftcard_id = gh.giftcard_id
+		 INNER JOIN CUSTOMER cm 		ON g.customer_id = cm.customer_id
+		 INNER JOIN PAYMENT pm 			ON gh.payment_id = pm.payment_id
+		 	  ,(SELECT @rownum :=0) AS R
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND g.customer_id = #{customerId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 기프트카드 히스토리 전체 개수 조회 -->
+	<select id="selectGiftcardHistoryTotalCount" parameterType="giftcardHistoryParam" resultType="int">
+		SELECT COUNT(g.giftcard_id) AS total_count
+		  FROM GIFTCARD g
+		 INNER JOIN GIFTCARD_HISTORY gh ON g.giftcard_id = gh.giftcard_id
+		 INNER JOIN CUSTOMER cm 		ON g.customer_id = cm.customer_id
+		 INNER JOIN PAYMENT pm 			ON gh.payment_id = pm.payment_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND g.customer_id = #{customerId}
+	</select>
+	
+	<!-- 기프트카드 히스토리 정보 저장 -->
+	<insert id="insertGiftcardHistoryInformation" parameterType="giftcardVO">
+		INSERT INTO GIFTCARD_HISTORY (
+				 earn_amount
+				,use_amount
+				,total_amount
+				,memo
+				,use_date				
+				,giftcard_id
+				,payment_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{earnAmount}
+				,#{useAmount}
+				,#{totalAmount}
+				,#{memo}
+				,#{useDate}
+				,#{giftcardId}
+				,#{paymentId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+</mapper>

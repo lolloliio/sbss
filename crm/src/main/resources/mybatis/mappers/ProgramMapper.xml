@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Program">
+
+	<!-- 프로그램 목록 조회 -->
+	<select id="selectProgramList" parameterType="programParam" resultType="programVO">
+		SELECT @rownum := @rownum+1 	AS rnum
+			  ,p.program_id				AS program_id
+			  ,pg.gender				AS gender
+			  ,cc1.code_name			AS gender_name
+			  ,pg.part					AS part
+			  ,cc2.code_name			AS part_name
+			  ,p.program_group_id		AS program_group_id
+			  ,pg.program_group_name	AS program_group_name			  
+			  ,p.cycle					AS cycle
+			  ,p.price					AS price
+			  ,pg.use_status			AS use_status
+			  ,CASE WHEN p.use_status = 'Y' THEN '사용'
+			  		ELSE '미사용'
+			   END  					AS use_status_name
+		  FROM PROGRAM p
+		 INNER JOIN PROGRAM_GROUP pg ON p.program_group_id = pg.program_group_id
+		 INNER JOIN COMMON_CODE cc1 ON pg.gender = cc1.code_id AND cc1.group_code_id = 'GENDER'
+		 INNER JOIN COMMON_CODE cc2 ON pg.part = cc2.code_id AND cc2.group_code_id = 'PART'
+		  	  ,(SELECT @rownum :=0) AS R
+		 WHERE pg.franchisee_id = #{franchiseeId}
+		<if test="search.value != null and search.value != '' ">
+		   AND (pg.program_group_name LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		cc1.code_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		cc2.code_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		p.cycle LIKE CONCAT('%', #{search.value}, '%') OR
+		   		p.price LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 프로그램 전체 개수 조회 -->
+	<select id="selectProgramTotalCount" parameterType="programParam" resultType="int">
+		SELECT COUNT(p.program_id) AS total_count
+		  FROM PROGRAM p
+		 INNER JOIN PROGRAM_GROUP pg ON p.program_group_id = pg.program_group_id
+		 INNER JOIN COMMON_CODE cc1 ON pg.gender = cc1.code_id AND cc1.group_code_id = 'GENDER'
+		 INNER JOIN COMMON_CODE cc2 ON pg.part = cc2.code_id AND cc2.group_code_id = 'PART'
+		 WHERE pg.franchisee_id = #{franchiseeId}
+		<if test="search.value != null and search.value != '' ">
+		   AND (pg.program_group_name LIKE CONCAT('%', #{search.value}, '%') OR 
+		   		cc1.code_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		cc2.code_name LIKE CONCAT('%', #{search.value}, '%') OR
+		   		p.cycle LIKE CONCAT('%', #{search.value}, '%') OR
+		   		p.price LIKE CONCAT('%', #{search.value}, '%')
+		   		)
+		</if>
+	</select>
+	
+	<!-- 프로그램 코드 목록 조회 -->
+	<select id="selectProgramCodeList" parameterType="programParam" resultType="programVO">
+		SELECT program_id
+			  ,cycle
+			  ,price
+		  FROM PROGRAM
+		 WHERE use_status = 'Y'
+		   AND franchisee_id = #{franchiseeId}
+		   AND program_group_id = #{programGroupId}
+	</select>
+
+	<!-- 프로그램 저장 -->
+	<insert id="insertProgramInformation" parameterType="programVO">
+		INSERT INTO PROGRAM(		
+				 program_group_id
+				,cycle
+				,price
+				,use_status
+				,franchisee_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{programGroupId}
+				,#{cycle}
+				,#{price}
+				,#{useStatus}
+				,#{franchiseeId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 프로그램 수정 -->
+	<update id="updateProgramInformation" parameterType="programVO">
+		UPDATE PROGRAM
+		   SET cycle 			= #{cycle}
+		   	  ,price 			= #{price}
+		   	  ,use_status		= #{useStatus}
+		   	  ,update_date 		= NOW()
+		   	  ,update_by 		= #{employeeId}
+		 WHERE program_id 		= #{programId}
+		   AND franchisee_id 	= #{franchiseeId}
+	</update>
+	
+</mapper>

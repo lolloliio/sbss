@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Point">
+
+	<!-- 포인트 목록 조회 -->
+	<select id="selectPointList" parameterType="pointParam" resultType="pointVO">
+		SELECT @rownum := @rownum+1 					AS rnum
+			  ,p.point_id								AS point_id
+			  ,p.point_amount							AS point_amount
+			  ,p.customer_id							AS customer_id
+			  ,cm.customer_name							AS customer_name
+			  ,DATE_FORMAT(p.update_date, '%Y-%m-%d')	AS update_date
+		  FROM POINT p
+		 INNER JOIN CUSTOMER cm ON p.customer_id = cm.customer_id
+		  	  ,(SELECT @rownum :=0) AS R
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 포인트 전체 갯수 조회 -->
+	<select id="selectPointTotalCount" parameterType="pointParam" resultType="int">
+		SELECT COUNT(p.point_id) AS total_count
+		  FROM POINT p
+		 INNER JOIN CUSTOMER cm ON p.customer_id = cm.customer_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+	</select>	
+
+	<!-- 포인트 정보 조회 -->
+	<select id="selectPointInformation" parameterType="pointParam" resultType="pointVO">
+		SELECT point_amount
+		  FROM POINT
+		 WHERE customer_id = #{customerId}
+	</select>
+	
+	<!-- 포인트 정보 저장 -->
+	<insert id="insertPointInformation" parameterType="pointVO" useGeneratedKeys="true" keyProperty="pointId">
+		INSERT INTO POINT(
+				 customer_id
+				,point_amount
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{customerId}
+				,#{pointAmount}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+	<!-- 포인트 정보 수정 -->
+	<update id="updatePointInformation" parameterType="pointVO">
+		UPDATE POINT
+		   SET update_date 		= NOW()
+              ,update_by 		= #{employeeId} 
+			<if test="pointAmount != null or pointAmount != '' ">
+		   	  ,point_amount 	= #{pointAmount}
+			</if>
+		 WHERE customer_id 		= #{customerId}              
+	</update>
+	
+	<!-- 포인트 히스토리 목록 조회 -->
+	<select id="selectPointHistoryList" parameterType="pointHistoryParam" resultType="pointHistoryVO">
+		SELECT @rownum := @rownum+1 				AS rnum
+			  ,ph.point_id							AS point_id
+			  ,ph.earn_point						AS earn_point
+			  ,ph.use_point							AS use_point
+			  ,ph.total_point						AS total_point
+			  ,DATE_FORMAT(ph.use_date, '%Y-%m-%d')	AS use_date
+			  ,ph.memo								AS memo
+			  ,cm.customer_name						AS customer_name
+		  FROM POINT p
+		 INNER JOIN POINT_HISTORY ph ON p.point_id = ph.point_id
+		 INNER JOIN CUSTOMER cm ON p.customer_id = cm.customer_id
+		 	  ,(SELECT @rownum :=0) AS R
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND p.customer_id = #{customerId}
+		<if test="order != null">
+			ORDER BY 
+			<foreach collection="order" item="item" separator=",">
+				${item.columnName} ${item.dir}
+ 			</foreach>
+		</if>
+		<if test="start != null and length != null">
+		 LIMIT #{start}, #{length}
+		</if>
+	</select>
+	
+	<!-- 포인트 히스토리 전체 개수 조회 -->
+	<select id="selectPointHistoryTotalCount" parameterType="pointHistoryParam" resultType="int">
+		SELECT COUNT(p.point_id) AS total_count
+		  FROM POINT p
+		 INNER JOIN POINT_HISTORY ph ON p.point_id = ph.point_id
+		 INNER JOIN CUSTOMER cm ON p.customer_id = cm.customer_id
+		 WHERE cm.franchisee_id = #{franchiseeId}
+		   AND p.customer_id = #{customerId}
+	</select>
+	
+	<!-- 포인트 히스토리 정보 저장 -->
+	<insert id="insertPointHistoryInformation" parameterType="pointVO">
+		INSERT INTO POINT_HISTORY (
+				 earn_point
+				,use_point
+				,total_point
+				,memo
+				,use_date				
+				,point_id
+				,create_date
+				,create_by
+				,update_date
+				,update_by
+			)VALUES(
+				 #{earnPoint}
+				,#{usePoint}
+				,#{totalPoint}
+				,#{memo}
+				,#{useDate}
+				,#{pointId}
+				,NOW()
+				,#{employeeId}
+				,NOW()
+				,#{employeeId}
+			)
+	</insert>
+	
+</mapper>
